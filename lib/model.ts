@@ -54,7 +54,7 @@ export const LIVE_ROWS = 24;
 export const TBILL_YIELD = 0.042;
 
 /** Default farm scenario the board first shows: deposit, drop share, horizon in weeks. */
-export const DEFAULT_DEPOSIT = 1000;
+export const DEFAULT_DEPOSIT = 10000;
 export const DEFAULT_DROP_SHARE = 0.07;
 export const DEFAULT_HORIZON_WEEKS = 12;
 
@@ -486,12 +486,13 @@ function wfBrier(all: SnapshotProtocol[], asOf: string, mode: OddsMode): number 
 // ---------------------------------------------------------------- farm economics
 //
 // A farm plan is costed at a chosen deposit: the slice is the farmer's share of the drop, the drop
-// is a share of the implied value, and the farming pool is taken as a quarter of the protocol's
-// TVL, the capital that would show up to farm a launch, so a deposit's slice is pro-rata to its
-// share of that pool. Fees are gas on the protocol's cheapest chain, once to set up, once a week
-// deposit at 4.2% a year for the horizon. Net = slice - fees - T-bill forgone; net/hour divides by
-// the hands-on time. FARM needs net of at least $25 and $5 an hour; THIN is a positive net below
-// that; anything else is SKIP. These are stated assumptions, not quotes.
+// is a share of the implied value, and the farming pool is max(25% of the protocol's TVL, $50M).
+// Pool penggarap diambil max(25% TVL, $50M) — setidaknya $50M modal ikut menggarap setiap peluncuran, jadi drop terbagi lebih banyak arah pada protokol kecil; $50M adalah floor watchlist snapshot sendiri.
+// A deposit's slice is pro-rata to its share of that pool. Fees are gas on the protocol's cheapest
+// chain, once to set up, once a week, plus the T-bill yield forgone on the deposit at 4.2% a year
+// for the horizon. Net = slice - fees - T-bill forgone; net/hour divides by the hands-on time.
+// FARM needs net of at least $25 and $5 an hour; THIN is a positive net below that; anything else
+// is SKIP. These are stated assumptions, not quotes.
 
 /** Gas in dollars for one transaction on a chain; the page uses the same table. */
 export function gasPerTx(chain: string): number {
@@ -529,7 +530,7 @@ export interface FarmMath {
 
 /** The costed verdict for one row at one deposit, drop share and horizon. */
 export function farmMath(row: { tvl_usd: number; chains: string[]; value_if_usd: number; implied_value_usd: number }, deposit: number, dropShare: number, weeks: number): FarmMath {
-  const pool = Math.max(1, 0.25 * row.tvl_usd);
+  const pool = Math.max(50_000_000, 0.25 * row.tvl_usd);
   const gas = cheapestGas(row.chains);
   const slice = (row.implied_value_usd * dropShare * deposit) / pool;
   const fees = gas * (2 + weeks + 1);

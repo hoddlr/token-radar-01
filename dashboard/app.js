@@ -7,7 +7,7 @@
   var DATA = window.RADAR;
   if (!DATA) return;
   var app = document.getElementById('board');
-  var state = { q: '', category: 'all', chain: 'all', tier: 'all', verdict: 'all', sort: 'implied', dir: -1, deposit: 1000, drop: 0.07, weeks: 12, view: 'board', selected: null };
+  var state = { q: '', category: 'all', chain: 'all', tier: 'all', verdict: 'all', sort: 'implied', dir: -1, deposit: 10000, drop: 0.07, weeks: 12, view: 'board', selected: null };
 
   var usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
   function fmtUsd(n) {
@@ -75,7 +75,7 @@
   function gasPerTx(c) { return GAS[c] === undefined ? 1.5 : GAS[c]; }
   function cheapestGas(chains) { if (!chains || !chains.length) return 1.5; return Math.min.apply(null, chains.map(gasPerTx)); }
   function farmMath(row) {
-    var pool = Math.max(1, 0.25 * row.tvl_usd);
+    var pool = Math.max(50000000, 0.25 * row.tvl_usd);
     var gas = cheapestGas(row.chains);
     var slice = row.implied_value_usd * state.drop * state.deposit / pool;
     var fees = gas * (2 + state.weeks + 1);
@@ -256,7 +256,7 @@
     }
     var search = el('input', { type: 'search', id: 'q', placeholder: 'Search name, category or chain', value: state.q, 'aria-label': 'Search the board' });
     search.addEventListener('input', function () { state.q = search.value; writeHash(); render(); });
-    var dep = sel('dep', 'Deposit', [[250, '$250'], [1000, '$1,000'], [5000, '$5,000'], [25000, '$25,000']], state.deposit, function (v) { state.deposit = Number(v); });
+    var dep = sel('dep', 'Deposit', [[250, '$250'], [1000, '$1,000'], [5000, '$5,000'], [10000, '$10,000'], [25000, '$25,000']], state.deposit, function (v) { state.deposit = Number(v); });
     var drop = sel('drop', 'Drop share', [[0.035, '3.5%'], [0.07, '7%'], [0.14, '14%']], state.drop, function (v) { state.drop = Number(v); });
     var hor = sel('hor', 'Horizon', [[4, '4 weeks'], [12, '12 weeks'], [26, '26 weeks']], state.weeks, function (v) { state.weeks = Number(v); });
     var ver = sel('ver', 'Verdict', [['all', 'Any verdict'], ['FARM', 'FARM'], ['THIN', 'THIN'], ['SKIP', 'SKIP']], state.verdict, function (v) { state.verdict = v; });
@@ -433,6 +433,7 @@
             el('div', null, el('span', { text: 'Hands-on time' }), el('b', { text: f.hours.toFixed(1) + ' hours' })),
             el('div', null, el('span', { text: 'Net per hour' }), el('b', { text: fmtMoney(f.nph) + ' / h' })),
             el('div', null, el('span', { text: 'Break-even odds: the launch odds at which the slice covers the costs' }), el('b', { text: Math.round(f.be * 100) + '%' }))),
+          el('p', { class: 'sub', text: 'Pool penggarap diambil max(25% TVL, $50M) — setidaknya $50M modal ikut menggarap setiap peluncuran, jadi drop terbagi lebih banyak arah pada protokol kecil; $50M adalah floor watchlist snapshot sendiri.' }),
           el('p', null, pill(f.verdict), el('span', { class: 'sub', text: '  FARM needs net of at least $25 and $5 an hour; THIN is a positive net below that.' })))),
       el('section', { class: 'panel method' },
         el('h2', { text: 'Farm plan' }),
